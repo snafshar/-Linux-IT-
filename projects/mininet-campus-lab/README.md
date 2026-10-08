@@ -1,67 +1,81 @@
-# Mininet Routed Campus Lab
+# SDN + Linux Network Namespace Lab
 
-An advanced Linux networking laboratory using Mininet, Linux routing, Open vSwitch, and traffic-control emulation.
+This is the advanced version of the Mininet project. It combines **software-defined networking**, **OpenFlow 1.3**, **Linux network namespaces**, Open vSwitch, traffic control, and an external Ryu controller.
 
-## Topology
-
+## Architecture
 ```text
- h1  h2                 h3  h4
-  \  /                   \  /
-   s1                     s2
-    |                     |
-    r1 ===== 20 Mbps ===== r2
-          10 ms / 1% loss
+ h1 h2 -> s1 ===== s2 ===== s3 <- h3 h4
+             |       |
+          OpenFlow  ns1 ns2
+             |
+        Ryu Controller
 ```
 
-The router-to-router link deliberately introduces bandwidth limits, latency, and packet loss.
+Mininet creates isolated Linux network namespaces for hosts. Open vSwitch acts as the programmable data plane. Ryu is the SDN control plane and learns MAC-to-port mappings through OpenFlow 1.3.
+
+## Files
+- `sdn_namespace_lab.py` — topology, namespaces, switches, tests
+- `ryu_controller.py` — OpenFlow 1.3 learning-switch controller
+- `run-sdn-lab.sh` — starts controller and laboratory
 
 ## Requirements
 - Linux
 - Mininet
 - Open vSwitch
 - Python 3
-- iperf
+- Ryu
 - sudo/root privileges
 
 ## Run
 ```bash
-chmod +x run-lab.sh
-./run-lab.sh
-./run-lab.sh --test
+chmod +x run-sdn-lab.sh
+./run-sdn-lab.sh
 ```
 
-## Useful CLI commands
+Controller log:
+```bash
+sudo cat /tmp/mininet-ryu.log
+```
+
+## Mininet experiments
 ```text
 nodes
 net
-dump
 links
+dump
 pingall
-h1 ping -c 5 10.0.2.10
-h1 traceroute -n 10.0.2.10
-r1 ip route
-r2 ip route
-r1 sysctl net.ipv4.ip_forward
+sh ovs-ofctl -O OpenFlow13 dump-flows s1
+sh ovs-ofctl -O OpenFlow13 dump-flows s2
+ns1 ip link
+ns2 ip route
+h1 tcpdump -ni h1-eth0
 exit
 ```
 
-## Learning objectives
-- network namespaces and virtual Ethernet
-- Linux IP forwarding
-- static routing
+## What you learn
+- Linux network namespaces
+- virtual Ethernet pairs
 - Open vSwitch
-- Python topology programming
-- bandwidth, delay, and packet-loss emulation
-- ICMP and TCP diagnostics
+- OpenFlow 1.3
+- SDN control/data-plane separation
+- controller-driven forwarding
+- MAC learning
+- flow-table inspection
+- traffic shaping and packet loss
 - reproducible network experiments
 
-## Experiments
-1. Reduce the router link to 5 Mbps and compare throughput.
-2. Increase delay and observe RTT.
-3. Increase packet loss and compare ping statistics.
-4. Remove a route and diagnose the failure.
-5. Add another LAN and router.
-6. Replace static routing with a dynamic routing daemon.
+## Advanced experiments
+1. Stop the controller and observe control-plane failure.
+2. Change the controller port and observe switch connection failure.
+3. Inspect flow counters before and after a ping.
+4. Add an OpenFlow rule that blocks traffic between two hosts.
+5. Create a statistics-collection controller application.
+6. Add a third namespace and implement an isolated tenant network.
+7. Replace MAC learning with destination-IP-based forwarding.
 
-## Safety
-The laboratory is isolated inside Mininet namespaces. It requires root privileges because Mininet creates virtual interfaces and namespaces.
+## Cleanup
+```bash
+sudo mn -c
+```
+
+Everything is created inside the Mininet/namespace laboratory and is intended for an isolated Linux test environment.
