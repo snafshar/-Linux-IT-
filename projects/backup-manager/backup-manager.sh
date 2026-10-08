@@ -2,88 +2,43 @@
 
 set -uo pipefail
 
-usage() {
-    cat <<EOF
-Usage: $0 [OPTIONS] SOURCE_DIRECTORY BACKUP_DIRECTORY
+KEEP=0; DRY=0; VERBOSE=0; CHECKSUM=1; POSITIONAL=()
 
-Options:
-  -k, --keep N    Keep only the newest N backup archives
-  -n, --dry-run   Show what would happen without creating a backup
-  -v, --verbose   Show detailed tar output
-  -h, --help      Show this help message
+usage(){ cat <<EOF
+Usage: $0 [OPTIONS] SOURCE BACKUP_DIR
+  -k, --keep N       Keep newest N archives
+  -n, --dry-run      Preview without creating a backup
+  -v, --verbose      Show files while archiving
+  --no-checksum      Do not create SHA-256 checksum
+  -h, --help         Show help
 EOF
 }
+fail(){ printf "Error: %s\n" "$*" >&2; exit 1; }
 
-error() { printf "Error: %s\n" "$*" >&2; exit 1; }
-
-KEEP=0
-DRY_RUN=0
-VERBOSE=0
-POSITIONAL=()
-
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -k|--keep)
-            [[ $# -ge 2 ]] || error "--keep requires a number"
-            [[ "$2" =~ ^[0-9]+$ ]] || error "--keep must be a non-negative integer"
-            KEEP="$2"; shift 2 ;;
-        -n|--dry-run) DRY_RUN=1; shift ;;
-        -v|--verbose) VERBOSE=1; shift ;;
-        -h|--help) usage; exit 0 ;;
-        --) shift; while [[ $# -gt 0 ]]; do POSITIONAL+=("$1"); shift; done; break ;;
-        -*) error "unknown option: $1" ;;
-        *) POSITIONAL+=("$1"); shift ;;
-    esac
-done
-
+while [[ $# -gt 0 ]]; do case "$1" in
+ -k|--keep) [[ $# -gt 1 && "$2" =~ ^[0-9]+$ ]] || fail "invalid --keep value"; KEEP="$2"; shift 2;;
+ -n|--dry-run) DRY=1; shift;; -v|--verbose) VERBOSE=1; shift;;
+ --no-checksum) CHECKSUM=0; shift;; -h|--help) usage; exit 0;;
+ --) shift; while (($#)); do POSITIONAL+=("$1"); shift; done; break;;
+ -*) fail "unknown option: $1";; *) POSITIONAL+=("$1"); shift;; esac; done
 [[ ${#POSITIONAL[@]} -eq 2 ]] || { usage; exit 2; }
-SOURCE="${POSITIONAL[0]}"
-DESTINATION="${POSITIONAL[1]}"
-
-command -v tar >/dev/null 2>&1 || error "tar is not installed"
-command -v find >/dev/null 2>&1 || error "find is not installed"
-[[ -d "$SOURCE" ]] || error "source directory does not exist: $SOURCE"
-SOURCE_ABS="$(cd "$SOURCE" && pwd -P)" || error "cannot resolve source directory"
-
-if [[ -e "$DESTINATION" ]]; then
-    DEST_ABS="$(cd "$DESTINATION" 2>/dev/null && pwd -P)" || error "cannot access backup directory: $DESTINATION"
-else
-    PARENT="$(dirname "$DESTINATION")"
-    mkdir -p "$PARENT" || error "cannot create parent directory: $PARENT"
-    DEST_ABS="$(cd "$PARENT" && pwd -P)/$(basename "$DESTINATION")"
-fi
-
-case "$DEST_ABS/" in
-    "$SOURCE_ABS/"*) error "backup directory cannot be inside the source directory" ;;
-esac
-
-mkdir -p "$DEST_ABS" || error "cannot create backup directory: $DEST_ABS"
-TIMESTAMP="$(date "+%Y-%m-%d_%H-%M-%S")"
-ARCHIVE="$DEST_ABS/backup_${TIMESTAMP}.tar.gz"
-
-if (( DRY_RUN )); then
-    printf "Dry run: source      = %s\n" "$SOURCE_ABS"
-    printf "Dry run: destination = %s\n" "$DEST_ABS"
-    printf "Dry run: archive     = %s\n" "$ARCHIVE"
-    (( KEEP > 0 )) && printf "Dry run: retain newest %s archives\n" "$KEEP"
-    exit 0
-fi
-
-if (( VERBOSE )); then
-    tar -cvzf "$ARCHIVE" -C "$(dirname "$SOURCE_ABS")" "$(basename "$SOURCE_ABS")"
-else
-    tar -czf "$ARCHIVE" -C "$(dirname "$SOURCE_ABS")" "$(basename "$SOURCE_ABS")"
-fi || { rm -f "$ARCHIVE"; error "backup failed"; }
-
-if command -v du >/dev/null 2>&1; then SIZE="$(du -h "$ARCHIVE" | awk '{print $1}')"; else SIZE="unknown"; fi
-printf "Backup created successfully:\n%s\nSize: %s\n" "$ARCHIVE" "$SIZE"
-
+SOURCE="${POSITIONAL[0]}"; DEST="${POSITIONAL[1]}"
+command -v tar >/dev/null 2>&1 || fail "tar is required"; [[ -d "$SOURCE" ]] || fail "source does not exist: $SOURCE"
+SRC="$(cd "$SOURCE" && pwd -P)" || fail "cannot resolve source"
+if [[ -e "$DEST" ]]; then OUT="$(cd "$DEST" && pwd -P)" || fail "cannot access destination"; else P="$(dirname "$DEST")"; mkdir -p "$P" || fail "cannot create parent"; OUT="$(cd "$P" && pwd -P)/$(basename "$DEST")"; fi
+case "$OUT/" in "$SRC/"*) fail "destination cannot be inside source";; esac
+mkdir -p "$OUT" || fail "cannot create destination"
+STAMP="$(date "+%Y-%m-%d_%H-%M-%S")"; ARCHIVE="$OUT/backup_${STAMP}.tar.gz"; SHA="$ARCHIVE.sha256"; MANIFEST="$ARCHIVE.manifest.txt"
+if (( DRY )); then printf "Source: %s\nDestination: %s\nArchive: %s\n" "$SRC" "$OUT" "$ARCHIVE"; ((KEEP)) && printf "Retention: newest %s\n" "$KEEP"; exit 0; fi
+printf "Creating backup: %s\n" "$ARCHIVE"
+if (( VERBOSE )); then tar -cvzf "$ARCHIVE" -C "$(dirname "$SRC")" "$(basename "$SRC")"; else tar -czf "$ARCHIVE" -C "$(dirname "$SRC")" "$(basename "$SRC")"; fi || { rm -f "$ARCHIVE"; fail "tar failed"; }
+printf "Source: %s\nCreated: %s\nArchive: %s\n" "$SRC" "$(date)" "$ARCHIVE" > "$MANIFEST"
+if (( CHECKSUM )); then if command -v sha256sum >/dev/null 2>&1; then sha256sum "$ARCHIVE" > "$SHA"; elif command -v shasum >/dev/null 2>&1; then shasum -a 256 "$ARCHIVE" > "$SHA"; else CHECKSUM=0; fi; fi
+SIZE="$(du -h "$ARCHIVE" | awk '{print $1}' 2>/dev/null || printf unknown)"
+printf "Backup created successfully.\nArchive: %s\nSize: %s\n" "$ARCHIVE" "$SIZE"
+(( CHECKSUM )) && printf "Checksum: %s\n" "$SHA"
 if (( KEEP > 0 )); then
-    mapfile -t ARCHIVES < <(find "$DEST_ABS" -maxdepth 1 -type f -name "backup_*.tar.gz" -printf "%T@ %p\n" 2>/dev/null | sort -nr | sed 's/^[^ ]* //')
-    if (( ${#ARCHIVES[@]} > KEEP )); then
-        for (( i=KEEP; i<${#ARCHIVES[@]}; i++ )); do
-            rm -f -- "${ARCHIVES[$i]}" || printf "Warning: could not remove %s\n" "${ARCHIVES[$i]}" >&2
-        done
-        printf "Retention cleanup: kept newest %s archive(s).\n" "$KEEP"
-    fi
+ mapfile -t A < <(find "$OUT" -maxdepth 1 -type f -name "backup_*.tar.gz" -printf "%T@ %p\n" 2>/dev/null | sort -nr | sed 's/^[^ ]* //')
+ for ((i=KEEP;i<${#A[@]};i++)); do rm -f -- "${A[$i]}" "${A[$i]}.sha256" "${A[$i]}.manifest.txt"; done
+ printf "Retention: kept newest %s archive(s).\n" "$KEEP"
 fi
