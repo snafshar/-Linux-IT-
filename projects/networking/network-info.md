@@ -1,18 +1,16 @@
 # Network Info
 
-Read-only network inspection for Linux.
+Read-only Linux network inspection tool.
 
 ## Usage
 ```bash
-chmod +x network-info.sh
 ./network-info.sh
+./network-info.sh --interface eth0
+./network-info.sh --json
 ```
 
-## What it shows
-- interface state and IP addresses
-- IPv4 and IPv6 routing tables
-- DNS configuration
-- TCP/UDP listening sockets
+## Reports
+Human-readable mode shows interface addresses, IPv4/IPv6 routes, DNS information and listening TCP/UDP sockets. JSON mode emits a compact summary for shell automation.
 
-## Commands practiced
-`ip`, `ss`, `resolvectl`, `cat`, `sed` and shell conditionals.
+## Commands
+`ip`, `ss`, `resolvectl`, `awk`, `sed`.
