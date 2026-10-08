@@ -1,47 +1,23 @@
 # Linux System Monitor
 
-A practical Bash system-health utility for inspecting a Linux machine from the terminal.
+A Bash resource monitor with human-readable and automation-friendly output.
 
 ## Features
-
-- Hostname, kernel and uptime information
-- CPU core count and load average
-- Memory utilization
-- Root filesystem utilization
-- Top CPU-consuming processes
-- Disk warning when root usage reaches 70%
-- JSON output for scripting and automation
-- Watch mode for continuously refreshed monitoring
-- Command-line help and input validation
+- CPU/load, memory and root-disk metrics
+- configurable memory and disk warning thresholds
+- top CPU processes
+- JSON output
+- continuous watch mode
+- validation and clean signal handling
 
 ## Usage
-
 ```bash
 chmod +x system-monitor.sh
 ./system-monitor.sh
-```
-
-JSON output:
-
-```bash
 ./system-monitor.sh --json
-```
-
-Continuous monitoring:
-
-```bash
 ./system-monitor.sh --watch 5
+./system-monitor.sh --mem-warn 85 --disk-warn 75
 ```
 
-Press `Ctrl+C` to stop watch mode.
-
-## Concepts practiced
-
-- Bash functions and local variables
-- positional and optional arguments
-- `case` statements, loops and traps
-- `/proc/loadavg`
-- `free`, `df`, `ps`, `awk`, and `nproc`
-- pipes, redirection and command substitution
-- automation-friendly output
-- exit codes and defensive scripting
+## Concepts
+Bash functions, option parsing, `/proc/loadavg`, `free`, `df`, `ps`, `awk`, loops, traps and exit codes.
