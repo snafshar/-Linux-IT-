@@ -1,30 +1,29 @@
 # Linux-IT Networks
 
-A practical Linux networking toolkit for learning network inspection, diagnostics, DNS, routing, sockets, and connectivity testing from the command line.
+A read-only Linux networking toolkit for inspection and connectivity troubleshooting.
 
-## Included tools
+## Tools
+- `network-info.sh` — interfaces, addresses, routes, DNS and listening sockets
+- `connectivity-check.sh` — interface, route, DNS, gateway and target connectivity tests
 
-- `network-info.sh` — summarizes interfaces, IP addresses, routes, DNS and listening sockets
-- `connectivity-check.sh` — checks local network configuration, DNS resolution, gateway reachability and Internet connectivity
-
-## Quick start
-
+## Examples
 ```bash
-chmod +x network-info.sh connectivity-check.sh
+chmod +x *.sh
 ./network-info.sh
+./network-info.sh --interface eth0
+./network-info.sh --json
 ./connectivity-check.sh
+./connectivity-check.sh --count 2 --timeout 5 example.com
 ```
 
 ## Learning goals
+- interfaces and IP addressing
+- IPv4/IPv6 routing
+- default gateways
+- DNS resolution
+- TCP/UDP sockets
+- ICMP diagnostics
+- exit codes and automation
 
-- Linux network interfaces and IP addressing
-- IPv4 and IPv6 basics
-- routing tables and default gateways
-- DNS configuration and name resolution
-- TCP/UDP listening sockets
-- connectivity troubleshooting
-- `ip`, `ss`, `ping`, `getent`, `resolvectl` and `awk`
-
-## Note
-
-The scripts are intentionally read-only: they inspect the system but do not change network configuration.
+## Safety
+The scripts inspect network state only. They do not modify interfaces, routes, DNS, firewall rules or other network configuration.
