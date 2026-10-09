@@ -9,11 +9,16 @@ while [[ $# -gt 0 ]]; do
   -*) echo "Unknown option: $1" >&2; exit 2;; *) HOST="$1"; shift;;
  esac
 done
-[[ "$COUNT" =~ ^[1-9][0-9]*$ && "$TIMEOUT" =~ ^[1-9][0-9]*$ ]] || exit 2
+[[ "$COUNT" =~ ^[1-9][0-9]*$ && "$TIMEOUT" =~ ^[1-9][0-9]*$ ]] || { echo "count and timeout must be positive integers" >&2; exit 2; }
 for command in ip ping ss getent; do command -v "$command" >/dev/null || { echo "$command required" >&2; exit 1; }; done
 echo "=== Connectivity Check ==="; echo "Target: $HOST"
-echo "[1] Default route"; ip route show default || true
-echo "[2] DNS"; getent hosts "$HOST" >/dev/null && echo "DNS: OK" || echo "DNS: FAILED"
-echo "[3] Ping"; ping -c "$COUNT" -W "$TIMEOUT" "$HOST" && echo "Ping: OK" || echo "Ping: FAILED"
-echo "[4] Listening sockets"; ss -lnt 2>/dev/null || true
-echo "[5] Interfaces"; ip -br addr
+route_status=0; dns_status=0; ping_status=0
+ip route show default >/dev/null 2>&1 || route_status=1
+getent hosts "$HOST" >/dev/null 2>&1 || dns_status=1
+ping -c "$COUNT" -W "$TIMEOUT" "$HOST" >/dev/null 2>&1 || ping_status=1
+echo "Default route: $([[ $route_status -eq 0 ]] && echo OK || echo FAILED)"
+echo "DNS: $([[ $dns_status -eq 0 ]] && echo OK || echo FAILED)"
+echo "Ping: $([[ $ping_status -eq 0 ]] && echo OK || echo FAILED)"
+echo "Listening sockets:"; ss -lnt 2>/dev/null || true
+echo "Interfaces:"; ip -br addr
+((route_status+dns_status+ping_status==0)) || exit 1
