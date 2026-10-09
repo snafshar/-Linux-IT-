@@ -1,50 +1,41 @@
 # Linux & IT Practice Lab
 
-A practical portfolio and learning lab covering Linux administration, Bash scripting, backup automation, system monitoring, networking, and network emulation.
+A hands-on portfolio covering Linux administration, Bash automation, backup safety, system monitoring, network troubleshooting, and virtual network emulation.
 
 ## Projects
-| Project | Purpose | Topics |
+
+| Project | Purpose | Main concepts |
 |---|---|---|
-| **Linux System Monitor** | Monitor resource health | CPU, memory, disk, processes, JSON, thresholds |
-| **Linux Backup Manager** | Create and maintain backups | tar, checksums, manifests, retention, safety |
-| **Linux-IT Networks** | Inspect and troubleshoot networking | IP, routes, DNS, sockets, connectivity |
-| **Mininet Routed Campus Lab** | Build reproducible virtual networks | Mininet, namespaces, Open vSwitch, routing, traffic control, iperf |
+| System Monitor | Inspect system health | load, memory, disk, processes, thresholds, JSON |
+| Backup Manager | Create and retain archives | tar, checksums, manifests, retention, safe paths |
+| Networking Toolkit | Diagnose local and remote connectivity | interfaces, routes, DNS, sockets, ping |
+| Mininet Campus Lab | Build virtual campus and SDN networks | namespaces, Open vSwitch, OpenFlow, Ryu, traffic control |
+| Enterprise SDN Simulation | Model 100 users and 5 servers | topology, MAC learning, flow installation, repeatable tests |
 
 ## Quick start
-```bash
-git clone https://github.com/snafshar/-Linux-IT-.git
-cd -Linux-IT-
-chmod +x projects/*/*.sh
-./projects/system-monitor/system-monitor.sh
-./projects/networking/network-info.sh
-./projects/networking/connectivity-check.sh
-./projects/mininet-campus-lab/run-lab.sh --test
-```
 
-## Design principles
-- Readable Bash and Python over unnecessary complexity
-- Safe, read-only diagnostics where possible
-- Explicit validation and useful exit codes
-- Small tools that can be combined from the command line
-- Documentation that explains both usage and concepts
-- Reproducible experiments for networking practice
+    git clone https://github.com/snafshar/-Linux-IT-.git
+    cd -Linux-IT-
+    ./projects/system-monitor/system-monitor.sh
+    ./projects/networking/network-info.sh
+    ./projects/networking/connectivity-check.sh example.com
+
+Mininet labs require a Linux host with Mininet and Open vSwitch installed. SDN labs additionally require Ryu. Launch scripts use sudo because Mininet creates network namespaces and virtual interfaces.
+
+## Principles
+
+- Validate command-line input and fail with useful messages.
+- Prefer read-only diagnostics for host networking.
+- Keep experiments reproducible with fixed random seeds.
+- Clean up virtual network state on exit.
+- Explain how to run each tool and what it teaches.
 
 ## Learning path
-1. System inspection
-2. Backup and automation
-3. Network inspection
-4. Network diagnostics
-5. Virtual network emulation with Mininet
-6. Extend the tools with logging, tests, dynamic routing, and automation
 
-## Structure
-```text
-projects/
-├── system-monitor/
-├── backup-manager/
-├── networking/
-└── mininet-campus-lab/
-    ├── README.md
-    ├── campus_lab.py
-    └── run-lab.sh
-```
+1. Inspect Linux resources.
+2. Create and verify backups.
+3. Inspect interfaces, routes, DNS, and sockets.
+4. Diagnose connectivity.
+5. Build a routed virtual campus.
+6. Explore OpenFlow and SDN control.
+7. Compare repeatable traffic-test results.
