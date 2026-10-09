@@ -1,28 +1,23 @@
 # Linux Backup Manager
 
-A defensive Bash backup utility for creating timestamped compressed archives and managing retention.
+A Bash utility for timestamped compressed backups, verification metadata, and retention cleanup.
 
 ## Features
-- `tar.gz` archives with timestamps
-- destination safety checks
+
+- timestamped tar.gz archives
+- normalized source and destination paths
+- refuses to place the backup directory inside the source
 - dry-run and verbose modes
-- configurable retention
-- SHA-256 checksum when available
-- small manifest beside each archive
-- removes failed partial archives
-- reports archive size
+- optional SHA-256 checksum
+- manifest containing source and creation time
+- retention of the newest N archives
+- removes partial archives if tar fails
 
 ## Usage
-```bash
-chmod +x backup-manager.sh
-./backup-manager.sh ~/Documents ~/linux-backups
-./backup-manager.sh --keep 5 ~/Documents ~/linux-backups
-./backup-manager.sh --dry-run ~/Documents ~/linux-backups
-./backup-manager.sh --no-checksum ~/Documents ~/linux-backups
-```
 
-## Output
-A normal backup creates the archive plus a manifest. By default it also creates `<archive>.sha256` when `sha256sum` or `shasum` is available.
+    ./backup-manager.sh ~/Documents ~/linux-backups
+    ./backup-manager.sh --keep 5 ~/Documents ~/linux-backups
+    ./backup-manager.sh --dry-run ~/Documents ~/linux-backups
+    ./backup-manager.sh --no-checksum ~/Documents ~/linux-backups
 
-## Concepts
-Shell arrays, option parsing, path normalization, `tar`, checksums, manifests, `find`, `sort`, retention and failure cleanup.
+Keep backups on a separate disk or trusted remote destination for stronger protection. Retention cleanup is destructive to older archives in the chosen backup directory, so verify the destination before enabling it.
