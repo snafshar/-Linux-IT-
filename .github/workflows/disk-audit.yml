@@ -1,0 +1,25 @@
+name: Disk Audit checks
+
+on:
+  push:
+    paths:
+      - "projects/2026-10-15/disk-audit/**"
+      - ".github/workflows/disk-audit.yml"
+  pull_request:
+    paths:
+      - "projects/2026-10-15/disk-audit/**"
+      - ".github/workflows/disk-audit.yml"
+
+jobs:
+  shell-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Bash syntax
+        run: bash -n projects/2026-10-15/disk-audit/disk_audit.sh
+      - name: Check usage error
+        run: |
+          if bash projects/2026-10-15/disk-audit/disk_audit.sh >/dev/null 2>&1; then
+            echo "Expected missing-argument invocation to fail"
+            exit 1
+          fi
