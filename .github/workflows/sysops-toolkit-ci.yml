@@ -1,0 +1,23 @@
+name: SysOps Toolkit CI
+
+on:
+  push:
+    paths:
+      - "labs/2026-10-19/sysops-toolkit/**"
+      - ".github/workflows/sysops-toolkit-ci.yml"
+  pull_request:
+    paths:
+      - "labs/2026-10-19/sysops-toolkit/**"
+      - ".github/workflows/sysops-toolkit-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bash-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run syntax and usage checks
+        run: bash labs/2026-10-19/sysops-toolkit/test_toolkit.sh
