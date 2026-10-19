@@ -1,0 +1,24 @@
+name: NetCheck CI
+
+on:
+  push:
+    paths:
+      - "projects/2026-10-16/netcheck/**"
+      - ".github/workflows/netcheck-ci.yml"
+  pull_request:
+    paths:
+      - "projects/2026-10-16/netcheck/**"
+      - ".github/workflows/netcheck-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Run NetCheck tests
+        run: bash projects/2026-10-16/netcheck/test_netcheck.sh
