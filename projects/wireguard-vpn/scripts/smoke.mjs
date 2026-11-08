@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -17,10 +14,8 @@ const env = {
   VPN_SUBNET: '10.71.0.0/24',
   VPN_ADMIN_TOKEN: token,
 };
-const dir = mkdtempSync(join(tmpdir(), 'vpn-smoke-'));
-
-function docker(args) {
-  const result = spawnSync('docker', args, { cwd: root, env, encoding: 'utf8', timeout: 300_000 });
+function docker(args, input) {
+  const result = spawnSync('docker', args, { cwd: root, env, input, encoding: 'utf8', timeout: 300_000 });
   if (result.status !== 0) {
     throw new Error(`Docker ${args.slice(0, 2).join(' ')} failed.\n${result.stderr || result.error?.message || ''}`);
   }
@@ -48,14 +43,14 @@ const probe = (client, url) => exec(client, 'node', '--input-type=module', '-e',
 `, url);
 
 function connect(client, profile, file, image) {
-  const path = join(dir, file);
-  writeFileSync(path, profile, { mode: 0o600 });
   docker([
     'run', '-d', '--name', client, '--network', `${project}_transport`,
     '--cap-drop', 'ALL', '--cap-add', 'NET_ADMIN', '--security-opt', 'no-new-privileges:true',
-    '--mount', `type=bind,src=${path},dst=/tmp/${file},readonly`, image, 'sleep', 'infinity',
+    image, 'sleep', 'infinity',
   ]);
-  exec(client, 'wg-quick', 'up', `/tmp/${file}`);
+  const path = `/tmp/${file}`;
+  docker(['exec', '-i', client, 'sh', '-c', 'umask 077 && cat > "$1"', 'sh', path], profile);
+  exec(client, 'wg-quick', 'up', path);
 }
 
 async function waitForGateway() {
@@ -135,5 +130,4 @@ try {
       process.exitCode = 1;
     }
   }
-  rmSync(dir, { recursive: true, force: true });
 }
