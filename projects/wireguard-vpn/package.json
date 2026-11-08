@@ -1,0 +1,12 @@
+{
+  "name": "wireguard-vpn-lab",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24.16.0" },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "test": "node --test",
+    "test:tunnel": "node scripts/smoke.mjs"
+  }
+}

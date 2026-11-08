@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WireGuard Lab</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-content">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+          <path d="M8 8l16 16M8 24L24 8" fill="none" stroke="currentColor" stroke-width="2"/>
+          <circle cx="8" cy="8" r="3" fill="currentColor"/>
+          <circle cx="24" cy="8" r="3" fill="currentColor"/>
+          <circle cx="8" cy="24" r="3" fill="currentColor"/>
+          <circle cx="24" cy="24" r="3" fill="currentColor"/>
+        </svg>
+        <span>WireGuard Lab</span>
+      </div>
+      <span class="topbar-note">LOCAL ADMIN</span>
+      <button id="lock" class="button secondary small" type="button" hidden>Lock dashboard</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section id="login" class="login" aria-labelledby="login-title">
+      <div class="login-intro">
+        <p class="eyebrow">PRIVATE NETWORK</p>
+        <h1 id="login-title">VPN dashboard</h1>
+        <p class="lede">Give your devices a private address, see when they last checked in, and revoke access from one place.</p>
+      </div>
+      <form id="login-form" class="panel login-form">
+        <label for="token">Admin token</label>
+        <p id="token-help" class="muted">Enter the token from the VPN host’s <code>.env</code> file.</p>
+        <input id="token" type="password" aria-describedby="token-help" autocomplete="off"
+               autocapitalize="off" spellcheck="false" maxlength="64" required>
+        <button id="unlock" class="button" type="submit">Unlock dashboard</button>
+        <p id="login-message" class="message" role="status"></p>
+      </form>
+    </section>
+
+    <section id="dashboard" aria-labelledby="dashboard-title" hidden>
+      <div class="overview">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">PRIVATE NETWORK</p>
+            <h1 id="dashboard-title" tabindex="-1">VPN dashboard</h1>
+          </div>
+          <button id="refresh" class="button secondary" type="button">Refresh status</button>
+        </div>
+        <dl class="metrics">
+          <div>
+            <dt>VPN subnet</dt>
+            <dd id="subnet">—</dd>
+          </div>
+          <div>
+            <dt>Public endpoint</dt>
+            <dd id="endpoint">—</dd>
+          </div>
+          <div>
+            <dt>Enrolled devices</dt>
+            <dd id="count">—</dd>
+          </div>
+        </dl>
+        <p class="network-note">This split tunnel routes the VPN subnet. Open the <a id="test-url">tunnel test</a> from an enrolled device.</p>
+      </div>
+
+      <div class="panel peer-panel">
+        <div class="section-head peer-head">
+          <div>
+            <h2>Devices</h2>
+            <p class="muted">One WireGuard profile per device.</p>
+          </div>
+          <form id="enroll-form" class="enroll-form">
+            <label class="sr-only" for="device-name">Device name</label>
+            <input id="device-name" placeholder="Device name" maxlength="48" required>
+            <button id="enroll" class="button" type="submit">Add device</button>
+          </form>
+        </div>
+        <p id="dashboard-message" class="message" role="status"></p>
+        <div id="empty" class="empty">
+          <strong>No devices enrolled</strong>
+          <p class="muted">Add a device and import its profile into WireGuard.</p>
+        </div>
+        <table id="peers" class="peer-table" role="table" hidden>
+          <caption class="sr-only">Enrolled devices and gateway statistics</caption>
+          <thead role="rowgroup">
+            <tr role="row">
+              <th scope="col" role="columnheader">Device</th>
+              <th scope="col" role="columnheader">Last handshake</th>
+              <th scope="col" role="columnheader">Traffic</th>
+              <th scope="col" role="columnheader"><span class="sr-only">Access</span></th>
+            </tr>
+          </thead>
+          <tbody id="peer-rows" role="rowgroup"></tbody>
+        </table>
+      </div>
+      <p class="footer-note">Handshake and traffic values reflect the latest refresh. Traffic is measured at the gateway.</p>
+    </section>
+  </main>
+
+  <template id="peer-template">
+    <tr role="row">
+      <td role="cell"><strong data-name></strong><code class="detail" data-address></code></td>
+      <td role="cell"><span class="badge" data-badge></span><time class="detail" data-time></time></td>
+      <td role="cell"><span data-received></span><span class="detail" data-sent></span></td>
+      <td class="action-cell" role="cell"><button class="button danger small" type="button">Revoke</button></td>
+    </tr>
+  </template>
+
+  <dialog id="profile-dialog" class="panel profile-dialog" aria-labelledby="profile-title">
+    <p class="eyebrow">DEVICE ENROLLED</p>
+    <h2 id="profile-title">Download the WireGuard profile</h2>
+    <p id="profile-info" class="muted"></p>
+    <p class="profile-note">This download contains the device’s private key. Save it now and import it into the WireGuard app.</p>
+    <div class="dialog-actions">
+      <button id="download" class="button" type="button" autofocus>Download .conf</button>
+      <button id="close-profile" class="button secondary" type="button">Done</button>
+    </div>
+  </dialog>
+</body>
+</html>

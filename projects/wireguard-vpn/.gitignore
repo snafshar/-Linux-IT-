@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+*.conf
+*.key
+*.sqlite*
+node_modules/

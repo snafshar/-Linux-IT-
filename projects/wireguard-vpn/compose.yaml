@@ -1,0 +1,57 @@
+services:
+  gateway:
+    build:
+      context: .
+      target: gateway
+    user: "0:1000"
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs: ["/tmp:mode=1777,noexec,nosuid,nodev"]
+    sysctls:
+      net.ipv4.ip_forward: "1"
+      net.ipv4.conf.all.send_redirects: "0"
+      net.ipv4.conf.default.send_redirects: "0"
+    environment:
+      VPN_ENDPOINT: "${VPN_ENDPOINT:?Set VPN_ENDPOINT in .env}"
+      VPN_SUBNET: "${VPN_SUBNET:-10.71.0.0/24}"
+    ports:
+      - "51820:51820/udp"
+    volumes:
+      - state:/var/lib/vpn
+      - control:/run/vpn
+    networks: [transport]
+    healthcheck:
+      test: [CMD-SHELL, "test -S /run/vpn/control.sock && wg show wg0 listen-port | grep -qx 51820"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: .
+      target: admin
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    environment:
+      VPN_ADMIN_TOKEN: "${VPN_ADMIN_TOKEN:?Set VPN_ADMIN_TOKEN in .env}"
+    ports:
+      - "127.0.0.1:8787:8787/tcp"
+    volumes:
+      - control:/run/vpn:ro
+    networks: [management]
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  transport:
+  management:
+
+volumes:
+  state:
+  control:
